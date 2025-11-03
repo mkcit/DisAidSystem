@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>File Error</title>
+  <style>
+    body {
+      background-color: #f8d7da;
+      color: #721c24;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2em;
+    }
+
+    a {
+      color: #721c24;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>File Error</h1>
+  <p>
+    <%= title %>
+  </p>
+
+  <% if (admin) { %>
+    <p><a href="/">Go Back Home</a></p>
+    <% } else {%>
+      <h1>النظام مغلق حاليا</h1>
+      <% } %>
+</body>
+
+</html>
