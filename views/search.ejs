@@ -172,7 +172,6 @@
         }
 
         .badge {
-
             align-items: center;
             gap: 6px;
             padding: 6px 10px;
@@ -316,37 +315,39 @@
     <main class="wrap">
         <section class="card" role="region" aria-label="بحث وتصفية">
             <div class="bar">
-                <form action="search" method="post" autocomplete="off" novalidate>
-                     
+                <form action="<%= (user==='A')?'/api/search/a':(user==='B')?'/api/search/b':'/api/search' %>"  method="post" autocomplete="off" novalidate>
                     <input id="search" name="hof_id" class="input" style="width: 75%;" type="tel" placeholder="ابحث بهوية رب الأسرة…" required
-                        inputmode="numeric" pattern="[0-9]*" <%= result===null? 'autofocus' : '' %>  />
+                        inputmode="numeric" pattern="[0-9]*" <%= result===null? 'autofocus' : '' %> />
                     <button class="btn ghost" style="background-color: var(--primary-600);" type="submit">بحث</button>
                 </form>
             </div>
 
-
-
             <% if (afterConfirmation) { %>
-                <div class="stat">
+                <div class="stat" style="border-radius: 0;font-size: 8pt;">
                     <span id="statusBadge" class="badge ok"><%=hof_fullname%> استلم بنجاح </span>
                 </div>
+                <div class="stat" style="border-radius: 0;">
+                    <span id="statusBadge" class="badge ok"  style="width: 50%;margin: auto;font-size: 50pt;color:yellow"><%=serial%></span>
+                </div>
             <% } %>
-            
-
-
-
 
             <% if (result && rowsCount > 0) { %>
                 <div class="stat">
-                    <span id="statusBadge" class="badge <%= result[0].IsReceived == 0 ? ' ok' : ' no' %>"><%= result[0].IsReceived != 0 ? 'مستلم سابقا' : 'لم يستلم' %></span>
+                    <span id="statusBadge" class="badge <%= result[0].IsReceived == 0 ? ' ok' : ' no' %>">
+                        <%= result[0].IsReceived != 0 ? 'مستلم سابقا' : 'لم يستلم' %>
+                    </span>
+                    
                 </div>
+               
+                
+
                 <div class="grid">
                     <% if (result[0].IsReceived != 0) { %>
-                        <div class="stat no" >
+                        <div class="stat no">
                             <small>المستلم</small>
                             <strong><%= result[0].RecieverName %></strong>
                         </div>
-                        <div class="stat no" >
+                        <div class="stat no">
                             <small>وقت الاستلام</small>
                             <strong><%= result[0].DeliveryTime %></strong>
                             <strong><%= result[0].DeviceName %></strong>
@@ -376,11 +377,12 @@
                     <form class="receive" id="receiveForm" action="/api/confirm" method="post" novalidate>
                         <input type="hidden" name="hof_id" value="<%= result[0].HOF_ID %>" />
                         <input type="hidden" name="HOF_FullName" value="<%= result[0].HOF_FullName %>" />
+                        <input type="hidden" name="user" value="<%= user %>" />
+                        <input type="hidden" name="serial" value="<%= result[0].Serial  %>" />
                         <input class="input" id="receiver_name" name="receiver_name" placeholder="اكتب اسم المستلم هنا" autocomplete="off" autofocus />
                         <button class="btn primary" id="submitReceive" type="submit">تأكيد الاستلام</button>
                     </form>
                 <% } %>
-                
             <% } %>
         </section>
     </main>
@@ -399,6 +401,82 @@
             border: 0;
         }
     </style>
-</body>
 
+    <!-- سكربت التقاط اسم/موديل الجهاز وإرساله مع نموذج التأكيد -->
+    <script>
+      const DEVICE_MAP = {
+        "SM-G991B": "Samsung Galaxy S21",
+        "SM-G996B": "Samsung Galaxy S21+",
+        "SM-G998B": "Samsung Galaxy S21 Ultra",
+        "SM-A125F": "Samsung Galaxy A12",
+        "SM-M236B": "Samsung Galaxy M23",
+        "iPhone14,5": "iPhone 13",
+        "iPhone14,2": "iPhone 13 Pro",
+        "iPhone15,3": "iPhone 14 Pro Max",
+      };
+
+      function modelFromUA(ua) {
+        const patterns = [
+          /(SM-[A-Z0-9]+)/,              // Samsung model codes
+          /(Pixel\s?[0-9a-zA-Z\s]*)/,    // Google Pixel
+          /(Redmi\s?[0-9A-Za-z\s\-+]*)/, // Xiaomi Redmi
+          /\bMi\s?[0-9A-Za-z\s\-+]*\b/,  // Xiaomi Mi
+          /\bM200[0-9A-Za-z\-]*\b/,      // بعض رموز شاومي
+          /\bONEPLUS\s?[A-Z0-9\-]+\b/,   // OnePlus
+          /(iPhone[0-9,]+)/              // iPhone code (أحيانًا)
+        ];
+        for (const re of patterns) {
+          const m = ua.match(re);
+          if (m && m[1]) return m[1].trim();
+        }
+        if (/iPhone/.test(ua)) return "iPhone";
+        if (/iPad/.test(ua)) return "iPad";
+        if (/Android/.test(ua)) return "Android";
+        if (/Windows/.test(ua)) return "Windows PC";
+        if (/Macintosh/.test(ua)) return "Mac";
+        return "Unknown";
+      }
+
+      function prettyNameFromModel(model) {
+        if (DEVICE_MAP[model]) return DEVICE_MAP[model];
+        if (model.startsWith("SM-")) return "Samsung " + model;
+        if (/^Pixel/i.test(model)) return model.replace(/\s+/g, " ").trim();
+        if (/^Redmi/i.test(model)) return model.trim();
+        if (/^Mi /i.test(model)) return model.trim();
+        if (/^ONEPLUS/i.test(model)) return model.replace(/\s+/, " ").trim();
+        return model;
+      }
+
+      async function detectDeviceName() {
+        try {
+          if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+            const he = await navigator.userAgentData.getHighEntropyValues(["model","platform","platformVersion","uaFullVersion"]);
+            if (he?.model) return prettyNameFromModel(he.model);
+          }
+        } catch (_) { /* ignore */ }
+
+        const ua = navigator.userAgent || "";
+        const model = modelFromUA(ua);
+        return prettyNameFromModel(model);
+      }
+
+      (async () => {
+        const deviceName = await detectDeviceName();
+        const form = document.querySelector('#receiveForm');
+        if (form) {
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'DeviceName';
+          hidden.value = deviceName;
+          form.appendChild(hidden);
+        }
+
+        // (اختياري) عرض الاسم للمستخدم للتأكد
+        // const note = document.createElement('div');
+        // note.className = 'note';
+        // note.textContent = `الجهاز المكتشف: ${deviceName}`;
+        // document.querySelector('.receive')?.appendChild(note);
+      })();
+    </script>
+</body>
 </html>

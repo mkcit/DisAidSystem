@@ -14,6 +14,7 @@ const createTable = function () {
       CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
+        Serial INTEGER DEFAULT 0,
         HOF_ID TEXT NOT NULL,
         HOF_FullName TEXT NOT NULL,
         Mobile TEXT,
@@ -60,8 +61,8 @@ const insertData = function (rows) {
   try {
     const insert = db.prepare(`INSERT INTO ` + TABLE_NAME + ` (
                         HOF_ID, HOF_FullName, Member_FullName, Member_ID,
-                        Member_DateBirth, Center_Name, Mobile, date
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`);
+                        Member_DateBirth, Center_Name, Mobile, Quantity, Serial, date 
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, datetime('now'))`);
 
     const deleteAll = db.prepare(`DELETE FROM ` + TABLE_NAME);
 
@@ -75,6 +76,8 @@ const insertData = function (rows) {
         const memeber_datebirth = row['Member Date Birth'];
         const center_name = row['Center Name'];
         const mobile = row['Jawwal#'];
+        const quantity = row['Quantity'];
+        const serial = row['Serial'];
 
         insert.run(hof_id,
           hof_fullname,
@@ -82,7 +85,10 @@ const insertData = function (rows) {
           member_id,
           memeber_datebirth,
           center_name,
-          mobile);
+          mobile,
+          quantity,
+          serial
+        );
       });
     });
 

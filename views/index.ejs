@@ -1,26 +1,49 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>الصفحة الرئيسية</title>
   <style>
+    :root {
+      --bg: #f6f9fc;
+      --card: #fff;
+      --text: #222;
+      --muted: #666;
+      --primary: #0a66ff;
+      --border: #e6e9ee;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       background: #f8f9fa;
       margin: 0;
       padding: 50px;
       text-align: center;
     }
-    h1 { color: #333; }
+
+    h1 {
+      color: #333;
+    }
+
     .menu {
-      margin-top: 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 15px;
+      margin: auto;
+      width: 40%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+      padding: 18px;
+
     }
-    a, button {
+
+    a,
+    button {
       text-decoration: none;
       background: #007bff;
       color: #fff;
@@ -33,13 +56,27 @@
       transition: background 0.2s;
       display: inline-block;
     }
-    a:hover, button:hover { background: #0056b3; }
-    button.delete { background: #dc3545; }
-    button.delete:hover { background: #b02a37; }
+
+    a:hover,
+    button:hover {
+      background: #0056b3;
+    }
+
+    button.delete {
+      background: #dc3545;
+    }
+
+    button.delete:hover {
+      background: #b02a37;
+    }
+
     /* حتى لا يأخذ الفورم مساحة إضافية */
-    .menu form { margin: 0; }
+    .menu form {
+      margin: 0;
+    }
   </style>
 </head>
+
 <body>
   <h1>لوحة التحكم</h1>
 
@@ -47,6 +84,11 @@
     <!-- روابط GET تبقى كما هي -->
     <a href="/uploadData">📤 رفع البيانات</a>
     <a href="/allData">📋 عرض جميع البيانات</a>
+
+    <!-- POST: إنشاء الجدول -->
+    <form action="/export" method="post" onsubmit="return confirm('هل تريد تصدير البيانات؟')">
+      <button type="submit">📋 تصدير البيانات</button>
+    </form>
 
     <!-- POST: إنشاء الجدول -->
     <form action="/createTable" method="post" onsubmit="return confirm('هل تريد إنشاء الجدول؟')">
@@ -64,4 +106,5 @@
     </form>
   </div>
 </body>
+
 </html>

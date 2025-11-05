@@ -78,7 +78,8 @@
             <thead>
               <tr>
                <!-- HOF_ID,HOF_FullName,Member_ID,Center_Name,Mobile -->
-                <th>هوية العائبة</th>
+               <th>#</th> 
+               <th>هوية العائبة</th>
                 <th>اسم رب الاسرة</th>
                 <th>هوية المستفيد</th>
                 <th>اسم المستفيد</th>
@@ -93,7 +94,9 @@
             </thead>
             <tbody>
               <% rows.forEach((r, idx) => { %>
-                <tr>
+                <tr <%- (r.IsReceived === 1) ? 'style="background-color: lightgreen;"' : '' %>>
+                    
+                  <td><%= r.Serial %></td>
                   <td><%= r.HOF_ID %></td>
                   <td><%= r.HOF_FullName %></td>
                   <td><%= r.Member_ID %></td>

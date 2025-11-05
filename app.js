@@ -6,6 +6,7 @@ const fs = require('fs');
 
 const os = require('os');
 
+const useragent = require('express-useragent');
 
 const path = require('path');
 
@@ -52,6 +53,10 @@ const XLSX = require('xlsx');
 // express app setup
 const express = require('express');
 const app = express();
+
+
+app.use(useragent.express());
+
 
 // setting up the view engine
 app.set('view engine', 'ejs');
@@ -109,6 +114,7 @@ app.post('/uploadData', uploadSettings.single('excelFile'), (req, res, next) => 
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
 
+
     const result = insertData(rows);
     if (result.type == 1) {
         return res.redirect('/allData');
@@ -122,11 +128,12 @@ app.post('/uploadData', uploadSettings.single('excelFile'), (req, res, next) => 
 
 });
 
-app.get('/export', (req, res, next) => {
+app.post('/export', (req, res, next) => {
     exportExcelFile(res, false);
 });
 
 const exportExcelFile = (res, isDropping) => {
+
     const result = fetchAll();
     if (result.type == 1) {
         const wb = XLSX.utils.book_new();
@@ -136,6 +143,8 @@ const exportExcelFile = (res, isDropping) => {
 
         const PATH = path.join(os.homedir(), 'Downloads');
         const FILE_NAME = PATH + '/' + getDateTime();
+
+
         const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
         fs.writeFile(FILE_NAME, buf, (err) => {
             if (err) {
@@ -144,6 +153,8 @@ const exportExcelFile = (res, isDropping) => {
                     admin: true
                 });
             }
+
+            console.log('exporting completed sucessfully!');
 
             if (!isDropping)
                 res.status(200).redirect('/');
@@ -219,6 +230,31 @@ app.post('/deleteAll', (req, res, next) => {
 });
 
 
+
+app.get('/api/search/a', (req, res) => {
+    res.status(200).render('search', {
+        title: 'Distribuation Aid System',
+        result: null,
+        rowsCount: 0,
+        error: null,
+        afterConfirmation: false,
+        user: 'A',
+        serial: ''
+    });
+});
+
+app.get('/api/search/b', (req, res) => {
+    res.status(200).render('search', {
+        title: 'Distribuation Aid System',
+        result: null,
+        rowsCount: 0,
+        error: null,
+        afterConfirmation: false,
+        user: 'B',
+        serial: ''
+    });
+});
+
 app.get('/api/search', (req, res) => {
     res.status(200).render('search', {
         title: 'Distribuation Aid System',
@@ -226,7 +262,57 @@ app.get('/api/search', (req, res) => {
         rowsCount: 0,
         error: null,
         afterConfirmation: false,
+        user: 'Default',
+        serial: ''
     });
+});
+
+app.post('/api/search/a', (req, res) => {
+    const hof_id = req.body.hof_id;
+    const result = fetchByHOF_ID(hof_id);
+
+    if (result.type == 1) {
+        const rowsCount = result.data.length;
+        res.status(200).render('search', {
+            title: 'Distribuation Aid System',
+            result: result.data,
+            rowsCount: rowsCount,
+            error: null,
+            afterConfirmation: false,
+            user: 'A',
+            serial: ''
+        })
+    } else {
+        res.status(400).render('fileError', {
+            title: result.message || 'Error in data processing!',
+            admin: false
+        });
+    }
+
+});
+
+app.post('/api/search/b', (req, res) => {
+    const hof_id = req.body.hof_id;
+    const result = fetchByHOF_ID(hof_id);
+
+    if (result.type == 1) {
+        const rowsCount = result.data.length;
+        res.status(200).render('search', {
+            title: 'Distribuation Aid System',
+            result: result.data,
+            rowsCount: rowsCount,
+            error: null,
+            afterConfirmation: false,
+            user: 'B',
+            serial: ''
+        })
+    } else {
+        res.status(400).render('fileError', {
+            title: result.message || 'Error in data processing!',
+            admin: false
+        });
+    }
+
 });
 
 app.post('/api/search', (req, res) => {
@@ -241,6 +327,8 @@ app.post('/api/search', (req, res) => {
             rowsCount: rowsCount,
             error: null,
             afterConfirmation: false,
+            user: 'Default',
+            serial: ''
         })
     } else {
         res.status(400).render('fileError', {
@@ -255,10 +343,12 @@ app.post('/api/confirm', (req, res) => {
     const hof_id = req.body.hof_id;
     const receiver_name = req.body.receiver_name;
     const hof_fullname = req.body.HOF_FullName;
-
+    const user = req.body.user;
     const hostname = os.hostname();
+    const device_name = req.body.DeviceName + '-' + user;
+    const serial = req.body.serial;
 
-    const result = updateReciving(hof_id, receiver_name, hostname);
+    const result = updateReciving(hof_id, receiver_name, device_name);
     if (result.type == 1) {
 
         res.status(200).render('search', {
@@ -267,7 +357,9 @@ app.post('/api/confirm', (req, res) => {
             rowsCount: 0,
             error: null,
             afterConfirmation: true,
-            hof_fullname: hof_fullname
+            hof_fullname: hof_fullname,
+            user: user,
+            serial: serial
 
         })
     } else {
