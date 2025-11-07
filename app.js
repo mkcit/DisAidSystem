@@ -19,6 +19,8 @@ const db = require('./database').db;
 // database connection
 const insertData = require('./database').insertData;
 
+const fetchStatistics = require('./database').fetchStatistics;
+
 // database connection
 const fetchAll = require('./database').fetchAll;
 
@@ -115,7 +117,7 @@ app.post('/uploadData', uploadSettings.single('excelFile'), (req, res, next) => 
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
 
 
-    const result = insertData(rows);
+    const result = insertData(rows, true);
     if (result.type == 1) {
         return res.redirect('/allData');
 
@@ -134,7 +136,7 @@ app.post('/export', (req, res, next) => {
 
 const exportExcelFile = (res, isDropping) => {
 
-    const result = fetchAll();
+    const result = fetchAll(true);
     if (result.type == 1) {
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(result.data, { cellDates: true });
@@ -186,8 +188,9 @@ const getDateTime = function () {
 }
 
 app.get('/allData', (req, res, next) => {
-    const result = fetchAll();
+    const result = fetchAll(false);
 
+    console.log(result);
     if (result.type == 1) {
         res.status(200).render('allData', {
             rows: result.data,
@@ -269,72 +272,87 @@ app.get('/api/search', (req, res) => {
 
 app.post('/api/search/a', (req, res) => {
     const hof_id = req.body.hof_id;
-    const result = fetchByHOF_ID(hof_id);
+    if (hof_id != '') {
+        const result = fetchByHOF_ID(hof_id);
 
-    if (result.type == 1) {
-        const rowsCount = result.data.length;
-        res.status(200).render('search', {
-            title: 'Distribuation Aid System',
-            result: result.data,
-            rowsCount: rowsCount,
-            error: null,
-            afterConfirmation: false,
-            user: 'A',
-            serial: ''
-        })
+        if (result.type == 1) {
+            const rowsCount = result.data.length;
+            res.status(200).render('search', {
+                title: 'Distribuation Aid System',
+                result: result.data,
+                rowsCount: rowsCount,
+                error: null,
+                afterConfirmation: false,
+                user: 'A',
+                serial: ''
+            })
+        } else {
+            res.status(400).render('fileError', {
+                title: result.message || 'Error in data processing!',
+                admin: false
+            });
+        }
     } else {
-        res.status(400).render('fileError', {
-            title: result.message || 'Error in data processing!',
-            admin: false
-        });
+        res.redirect('/api/search/a');
     }
+
 
 });
 
 app.post('/api/search/b', (req, res) => {
     const hof_id = req.body.hof_id;
-    const result = fetchByHOF_ID(hof_id);
+    if (hof_id !== '') {
+        const result = fetchByHOF_ID(hof_id);
 
-    if (result.type == 1) {
-        const rowsCount = result.data.length;
-        res.status(200).render('search', {
-            title: 'Distribuation Aid System',
-            result: result.data,
-            rowsCount: rowsCount,
-            error: null,
-            afterConfirmation: false,
-            user: 'B',
-            serial: ''
-        })
+        if (result.type == 1) {
+            const rowsCount = result.data.length;
+            res.status(200).render('search', {
+                title: 'Distribuation Aid System',
+                result: result.data,
+                rowsCount: rowsCount,
+                error: null,
+                afterConfirmation: false,
+                user: 'B',
+                serial: ''
+            })
+        } else {
+            res.status(400).render('fileError', {
+                title: result.message || 'Error in data processing!',
+                admin: false
+            });
+        }
     } else {
-        res.status(400).render('fileError', {
-            title: result.message || 'Error in data processing!',
-            admin: false
-        });
+        res.redirect('/api/search/b');
     }
+
 
 });
 
 app.post('/api/search', (req, res) => {
     const hof_id = req.body.hof_id;
-    const result = fetchByHOF_ID(hof_id);
+    if (hof_id !== '') {
+        const result = fetchByHOF_ID(hof_id);
 
-    if (result.type == 1) {
-        const rowsCount = result.data.length;
-        res.status(200).render('search', {
-            title: 'Distribuation Aid System',
-            result: result.data,
-            rowsCount: rowsCount,
-            error: null,
-            afterConfirmation: false,
-            user: 'Default',
-            serial: ''
-        })
-    } else {
-        res.status(400).render('fileError', {
-            title: result.message || 'Error in data processing!',
-            admin: false
-        });
+        if (result.type == 1) {
+            const rowsCount = result.data.length;
+            res.status(200).render('search', {
+                title: 'Distribuation Aid System',
+                result: result.data,
+                rowsCount: rowsCount,
+                error: null,
+                afterConfirmation: false,
+                user: 'Default',
+                serial: ''
+            })
+        } else {
+            res.status(400).render('fileError', {
+                title: result.message || 'Error in data processing!',
+                admin: false
+            });
+        }
+    }
+    else {
+        res.redirect('/api/search');
     }
 
 });
@@ -372,9 +390,22 @@ app.post('/api/confirm', (req, res) => {
 });
 
 app.use('/', (req, res, next) => {
-    res.status(200).render('index', {
-        title: 'Main Page'
-    });
+    const result = fetchStatistics();
+    const [data] = result.data;
+
+    if (result.type == 1) {
+        res.status(200).render('index', {
+            title: 'Aid Dist System',
+            data: data
+        });
+    }
+    else {
+        res.status(400).render('fileError', {
+            title: result.message || 'Error in data processing!',
+            admin: true
+        });
+    }
+
 });
 
 

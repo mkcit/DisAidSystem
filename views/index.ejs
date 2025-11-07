@@ -2,29 +2,24 @@
 <html lang="ar" dir="rtl">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>الصفحة الرئيسية</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لوحة الإحصائيات</title>
   <style>
     :root {
-      --bg: #f6f9fc;
-      --card: #fff;
-      --text: #222;
-      --muted: #666;
-      --primary: #0a66ff;
-      --border: #e6e9ee;
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --accent: #06b6d4;
+      --ring: #e2e8f0;
+      --success: #16a34a;
+      --warn: #f59e0b;
     }
 
-    body {
-      font-family: sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 50px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #333;
+    * {
+      box-sizing: border-box
     }
 
     .menu {
@@ -74,12 +69,146 @@
     .menu form {
       margin: 0;
     }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Kufi Arabic", "Tajawal", "Cairo", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      margin-bottom: 20px
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+
+    /* بطاقات صغيرة */
+    .card {
+      grid-column: span 12;
+      background: var(--card);
+      border: 1px solid var(--ring);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(2, 6, 23, .05);
+    }
+
+    .kpi {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .kpi .label {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .kpi .value {
+      font-weight: 700;
+      font-size: 22px
+    }
+
+    .pill {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: var(--muted);
+      border: 1px dashed var(--ring);
+    }
+
+    /* تقدم */
+    .progress {
+      margin-top: 10px;
+      height: 10px;
+      width: 100%;
+      background: #eef2ff;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width .5s ease;
+    }
+
+    /* تخطيط ريسبونسف */
+    @media (min-width:520px) {
+      .span-6 {
+        grid-column: span 6
+      }
+
+      .span-4 {
+        grid-column: span 6
+      }
+    }
+
+    @media (min-width:900px) {
+      .span-6 {
+        grid-column: span 6
+      }
+
+      .span-4 {
+        grid-column: span 4
+      }
+    }
+
+    /* صف تلخيصي كبير للكمية */
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chunk {
+      flex: 1 1 220px;
+      background: #f8fafc;
+      border: 1px dashed var(--ring);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .chunk .title {
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .chunk .num {
+      font-size: 20px;
+      font-weight: 700
+    }
+
+    .ok {
+      color: var(--success)
+    }
+
+    .warn {
+      color: var(--warn)
+    }
   </style>
 </head>
 
 <body>
-  <h1>لوحة التحكم</h1>
-
   <div class="menu">
     <!-- روابط GET تبقى كما هي -->
     <a href="/uploadData">📤 رفع البيانات</a>
@@ -105,6 +234,92 @@
       <button type="submit" class="delete">🗑️ حذف الجدول</button>
     </form>
   </div>
+
+
+  <section class="grid">
+    <!-- KPIs أساسية -->
+    <div class="card span-4">
+      <div class="kpi">
+        <div>
+          <div class="label">إجمالي المستفيدين</div>
+          <div class="value" id="totalBeneficiaries">
+            <%= data.total_beneficiaries %>
+          </div>
+        </div>
+        <span class="pill">Beneficiaries</span>
+      </div>
+    </div>
+
+    <div class="card span-4">
+      <div class="kpi">
+        <div>
+          <div class="label">عدد المستلمين</div>
+          <div class="value" id="receivedCount">
+            <%= data.received_count %>
+          </div>
+        </div>
+        <span class="pill ok">Received</span>
+      </div>
+      <div class="progress">
+        <div class="bar" id="receivedPctBar" style="width: <%= data.received_count/data.total_beneficiaries*100 %>%">
+        </div>
+      </div>
+      <div class="sub" id="receivedPctText">
+        <%= Number(data.received_count/data.total_beneficiaries*100).toFixed(1) %>%
+      </div>
+    </div>
+
+    <div class="card span-4">
+      <div class="kpi">
+        <div>
+          <div class="label">المتبقّي من المستفيدين</div>
+          <div class="value" id="pendingCount">
+            <%= data.pending_count %>
+          </div>
+        </div>
+        <span class="pill warn">Pending</span>
+      </div>
+    </div>
+
+    <!-- ملخص الكميات -->
+    <div class="card span-12">
+      <div class="kpi" style="margin-bottom:8px">
+        <div>
+          <div class="label">ملخص الكميات</div>
+          <div class="value">إجمالي / المستلم / المتبقي</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="chunk">
+          <div class="title">إجمالي الكمية</div>
+          <div class="num" id="totalQty">
+            <%= data.total_qty %>
+          </div>
+        </div>
+        <div class="chunk">
+          <div class="title">الكمية المستلمة</div>
+          <div class="num ok" id="receivedQty">
+            <%= data.received_qty %>
+          </div>
+        </div>
+        <div class="chunk">
+          <div class="title">الكمية المتبقية</div>
+          <div class="num warn" id="remainingQty">
+            <%= data.remaining_qty %>
+          </div>
+        </div>
+      </div>
+      <div class="progress" style="margin-top:14px">
+        <div class="bar" id="qtyPctBar" style="width: <%= data.received_qty/data.total_qty*100 %>%"></div>
+      </div>
+      <div class="sub" id="qtyPctText" style="margin-top:6px">
+        <%= Number(data.received_qty/data.total_qty*100).toFixed(1) %>%
+      </div>
+    </div>
+
+
+  </section>
+
 </body>
 
 </html>

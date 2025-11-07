@@ -56,28 +56,65 @@ const createTable = function () {
 
 
 
-const insertData = function (rows) {
+const insertData = function (rows, isNormalUploading = true) {
 
   try {
-    const insert = db.prepare(`INSERT INTO ` + TABLE_NAME + ` (
-                        HOF_ID, HOF_FullName, Member_FullName, Member_ID,
-                        Member_DateBirth, Center_Name, Mobile, Quantity, Serial, date 
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, datetime('now'))`);
 
     const deleteAll = db.prepare(`DELETE FROM ` + TABLE_NAME);
 
+    let insert;
+    if (isNormalUploading)
+      insert = db.prepare(`INSERT INTO ` + TABLE_NAME + ` (
+                        HOF_ID, HOF_FullName, Member_FullName, Member_ID,
+                        Member_DateBirth, Center_Name, Mobile, Quantity, Serial, date 
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, datetime('now'))`);
+    else {
+
+      insert = db.prepare(`INSERT INTO ` + TABLE_NAME + ` (
+                        HOF_ID, HOF_FullName, Member_FullName, Member_ID,
+                        Member_DateBirth, Center_Name, Mobile, Quantity, Serial,IsReceived,DeliveryTime,RecieverName,DeviceName, date 
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?, ?,?,datetime('now'))`);
+    }
+
     const transaction = db.transaction((rows) => {
       deleteAll.run();
-      rows.forEach(row => {
-        const hof_id = row['HOF ID'];
-        const hof_fullname = row['HOF FullName'];
-        const member_fullName = row['Member FullName'];
-        const member_id = row['Member ID'];
-        const memeber_datebirth = row['Member Date Birth'];
-        const center_name = row['Center Name'];
-        const mobile = row['Jawwal#'];
-        const quantity = row['Quantity'];
-        const serial = row['Serial'];
+      if (isNormalUploading) {
+        rows.forEach(row => {
+          const hof_id = row['HOF ID'];
+          const hof_fullname = row['HOF FullName'];
+          const member_fullName = row['Member FullName'];
+          const member_id = row['Member ID'];
+          const memeber_datebirth = row['Member Date Birth'];
+          const center_name = row['Center Name'];
+          const mobile = row['Jawwal#'];
+          const quantity = row['Quantity'];
+          const serial = row['Serial'];
+
+          insert.run(hof_id,
+            hof_fullname,
+            member_fullName,
+            member_id,
+            memeber_datebirth,
+            center_name,
+            mobile,
+            quantity,
+            serial
+          );
+        });
+      } else {
+        const hof_id = row['هوية رب الاسرة'];
+        const hof_fullname = row['اسم رب الاسرة'];
+        const member_fullName = row['اسم المستفيد'];
+        const member_id = row['هوية المستفيد'];
+        const memeber_datebirth = row['تاريخ الميلاد'];
+        const center_name = row['اسم المركز'];
+        const mobile = row['الجوال'];
+        const quantity = row['الكمية'];
+        const serial = row['#'];
+        const reciever_name = row['المُستلم'];
+        const delivery_time = row['وقت التسليم'];
+        const device_name = row['المسؤول'];
+        const is_received = row['استلم/لم'];
 
         insert.run(hof_id,
           hof_fullname,
@@ -87,9 +124,14 @@ const insertData = function (rows) {
           center_name,
           mobile,
           quantity,
-          serial
+          serial,
+          is_received,
+          delivery_time,
+          reciever_name,
+          device_name,
         );
-      });
+      }
+
     });
 
     transaction(rows);
@@ -145,13 +187,22 @@ const deleteAllRows = function () {
   }
 }
 
-const fetchAll = function () {
+const fetchAll = function (isExported) {
 
 
   // const select = db.prepare('SELECT HOF_ID,HOF_FullName,Member_FullName,Member_ID,Center_Name,Mobile FROM ' + TABLE_NAME + ';');
 
   try {
-    const select = db.prepare('SELECT * FROM ' + TABLE_NAME + ';');
+    // const select = db.prepare('SELECT * FROM ' + TABLE_NAME + ';');
+
+
+    let select;
+    if (isExported === true)
+      select = db.prepare(
+        'SELECT Serial AS "#", HOF_ID AS "هوية رب الاسرة", Quantity AS "الكمية",HOF_FullName AS "اسم رب الاسرة", RecieverName AS "المُستلم", Mobile AS "الجوال", Member_FullName AS "اسم المستفيد", Member_ID AS "هوية المستفيد",Member_DateBirth AS "تاريخ الميلاد",IsReceived AS "استلم/لم", Center_Name AS "اسم المركز",DeliveryTime AS "وقت التسليم",DeviceName AS "المسؤول" FROM ' + TABLE_NAME + ';');
+    else
+      select = db.prepare('SELECT * FROM ' + TABLE_NAME + ';');
+
     const data = select.all();
     const result = {
       type: 1,
@@ -167,6 +218,39 @@ const fetchAll = function () {
       data: null
     };
     return result;
+  }
+}
+
+const fetchStatistics = () => {
+  try {
+    const sql = `SELECT
+    COUNT(*)                                                   AS total_beneficiaries, --إجمالي المستفيدين(حسب الصف)
+    SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END)           AS received_count, --عدد المستلمين
+    COUNT(*) - SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END) AS pending_count, --المتبقّي من المستفيدين
+
+    COALESCE(SUM(Quantity), 0)                                 AS total_qty, --إجمالي الكمية
+    COALESCE(SUM(CASE WHEN IsReceived = 1 THEN Quantity ELSE 0 END), 0) AS received_qty, --الكمية المستلمة
+    COALESCE(SUM(Quantity), 0)
+      - COALESCE(SUM(CASE WHEN IsReceived = 1 THEN Quantity ELSE 0 END), 0) AS remaining_qty-- الكمية المتبقية
+FROM ${TABLE_NAME};`;
+
+    const select = db.prepare(sql);
+    const data = select.all();
+
+    return {
+      type: 1,
+      message: "success",
+      data: data
+    };
+
+
+  } catch (err) {
+    return {
+      type: -1,
+      message: err.message,
+      code: err.code || null,
+      data: null
+    };
   }
 }
 
@@ -222,4 +306,4 @@ const updateReciving = function (hof_id, receiver_name, hostname) {
   }
 }
 
-module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable };
+module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable,fetchStatistics };

@@ -379,10 +379,14 @@
                         <input type="hidden" name="HOF_FullName" value="<%= result[0].HOF_FullName %>" />
                         <input type="hidden" name="user" value="<%= user %>" />
                         <input type="hidden" name="serial" value="<%= result[0].Serial  %>" />
-                        <input class="input" id="receiver_name" name="receiver_name" placeholder="اكتب اسم المستلم هنا" autocomplete="off" autofocus />
+                        <input class="input" id="receiver_name" name="receiver_name" lang="ar" dir="rtl" placeholder="اكتب اسم المستلم هنا" autocomplete="off" autofocus />
                         <button class="btn primary" id="submitReceive" type="submit">تأكيد الاستلام</button>
                     </form>
                 <% } %>
+            <% } else if (result && rowsCount == 0) { %>
+                <div class="stat" style="border-radius: 0;font-size: 8pt;">
+                    <span id="statusBadge" class="badge no">للاسف هذا الشخص غير مستفيد</span>
+                </div>
             <% } %>
         </section>
     </main>
