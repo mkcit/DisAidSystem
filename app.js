@@ -26,6 +26,10 @@ const fetchAll = require('./database').fetchAll;
 
 
 // database connection
+// const alterTable = require('./database').alterTable;
+
+
+// database connection
 const createTable = require('./database').createTable;
 
 
@@ -54,6 +58,7 @@ const XLSX = require('xlsx');
 
 // express app setup
 const express = require('express');
+// const { updateDistName } = require('./database');
 const app = express();
 
 
@@ -388,6 +393,31 @@ app.post('/api/confirm', (req, res) => {
     }
 
 });
+
+
+// app.use('/alter', (req, res, next) => {
+//     const result = alterTable();
+//     if (result.type == 1) {
+//         console.log('Table Altered Successfully!');
+//         res.status(200).send('Table Altered Successfully!');
+//     } else {
+//         console.log('Error: ' + result.message);
+//         res.status(400).send('Error: ' + result.message);
+//     }
+
+// });
+
+// app.use('/updateDistName', (req, res, next) => {
+//     const result = updateDistName();
+//     if (result.type == 1) {
+//         console.log('Table Altered Successfully!');
+//         res.status(200).send('Table Altered Successfully!');
+//     } else {
+//         console.log('Error: ' + result.message);
+//         res.status(400).send('Error: ' + result.message);
+//     }
+
+// });
 
 app.use('/', (req, res, next) => {
     const result = fetchStatistics();

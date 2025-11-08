@@ -30,7 +30,7 @@ const createTable = function () {
         DeviceName TEXT NULL,
 
         date TEXT DEFAULT (datetime('now')),
-
+        DistName TEXT NULL,
 
         
         Member_DateBirth TEXT
@@ -199,7 +199,7 @@ const fetchAll = function (isExported) {
     let select;
     if (isExported === true)
       select = db.prepare(
-        'SELECT Serial AS "#", HOF_ID AS "هوية رب الاسرة", Quantity AS "الكمية",HOF_FullName AS "اسم رب الاسرة", RecieverName AS "المُستلم", Mobile AS "الجوال", Member_FullName AS "اسم المستفيد", Member_ID AS "هوية المستفيد",Member_DateBirth AS "تاريخ الميلاد",IsReceived AS "استلم/لم", Center_Name AS "اسم المركز",DeliveryTime AS "وقت التسليم",DeviceName AS "المسؤول" FROM ' + TABLE_NAME + ';');
+        'SELECT Serial AS "#", HOF_ID AS "هوية رب الاسرة", Quantity AS "الكمية",HOF_FullName AS "اسم رب الاسرة", RecieverName AS "المُستلم", Mobile AS "الجوال", Member_FullName AS "اسم المستفيد", Member_ID AS "هوية المستفيد",Member_DateBirth AS "تاريخ الميلاد",IsReceived AS "استلم/لم", Center_Name AS "اسم المركز",DeliveryTime AS "وقت التسليم",DeviceName AS "المسؤول", DistName AS "كشف التوزيع" FROM ' + TABLE_NAME + ';');
     else
       select = db.prepare('SELECT * FROM ' + TABLE_NAME + ';');
 
@@ -280,6 +280,55 @@ const fetchByHOF_ID = function (hof_id) {
 }
 
 
+// const alterTable = () => {
+
+//   try {
+//     db.exec(`ALTER TABLE ${TABLE_NAME} ADD COLUMN DistName TExT NULL;`);
+//     const result = {
+//       type: 1,
+//       message: "success"
+//     };
+//     return result;
+//   }
+//   catch (err) {
+//     const result = {
+//       type: -1,
+//       message: err.message,
+
+//     }
+//     return result;
+
+//   }
+// }
+
+
+// const updateDistName = function () {
+
+//   try {
+
+//     const update = db.prepare(`UPDATE  ` + TABLE_NAME + ` SET  
+//         DistName= 'Diapers#4'`);
+
+//     const info = update.run();
+//     const result = {
+//       type: 1,
+//       message: "success",
+//       info: info
+//     };
+//     return result;
+//   }
+//   catch (err) {
+//     const result = {
+//       type: -1,
+//       message: err.message,
+//       code: err.code || null,
+//       info: null
+//     };
+//     return result;
+//   }
+// }
+
+
 const updateReciving = function (hof_id, receiver_name, hostname) {
 
   try {
@@ -300,10 +349,10 @@ const updateReciving = function (hof_id, receiver_name, hostname) {
       type: -1,
       message: err.message,
       code: err.code || null,
-      info: info
+      info: null
     };
     return result;
   }
 }
 
-module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable,fetchStatistics };
+module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable, fetchStatistics, /*alterTable*/ /*updateDistName*/ };
