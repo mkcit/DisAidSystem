@@ -19,11 +19,14 @@ const db = require('./database').db;
 // database connection
 const insertData = require('./database').insertData;
 
+const deactivateByDistName = require('./database').deactivateByDistName;
+
 const fetchStatistics = require('./database').fetchStatistics;
 
 // database connection
 const fetchAll = require('./database').fetchAll;
 
+const deleteRowsByDistName = require('./database').deleteRowsByDistName;
 
 // database connection
 // const alterTable = require('./database').alterTable;
@@ -58,6 +61,7 @@ const XLSX = require('xlsx');
 
 // express app setup
 const express = require('express');
+const { constants } = require('buffer');
 // const { updateDistName } = require('./database');
 const app = express();
 
@@ -247,7 +251,8 @@ app.get('/api/search/a', (req, res) => {
         error: null,
         afterConfirmation: false,
         user: 'A',
-        serial: ''
+        serial: '',
+        hasDelivery: false
     });
 });
 
@@ -259,7 +264,8 @@ app.get('/api/search/b', (req, res) => {
         error: null,
         afterConfirmation: false,
         user: 'B',
-        serial: ''
+        serial: '',
+        hasDelivery: false
     });
 });
 
@@ -271,7 +277,8 @@ app.get('/api/search', (req, res) => {
         error: null,
         afterConfirmation: false,
         user: 'Default',
-        serial: ''
+        serial: '',
+        hasDelivery: false
     });
 });
 
@@ -280,6 +287,13 @@ app.post('/api/search/a', (req, res) => {
     if (hof_id != '') {
         const result = fetchByHOF_ID(hof_id);
 
+        let hasDelivery = false;
+        result.data.forEach(row => {
+            if (row.IsReceived == 0) {
+                hasDelivery = true;
+                return;
+            }
+        });
         if (result.type == 1) {
             const rowsCount = result.data.length;
             res.status(200).render('search', {
@@ -289,7 +303,8 @@ app.post('/api/search/a', (req, res) => {
                 error: null,
                 afterConfirmation: false,
                 user: 'A',
-                serial: ''
+                serial: '',
+                hasDelivery: hasDelivery
             })
         } else {
             res.status(400).render('fileError', {
@@ -308,7 +323,13 @@ app.post('/api/search/b', (req, res) => {
     const hof_id = req.body.hof_id;
     if (hof_id !== '') {
         const result = fetchByHOF_ID(hof_id);
-
+        let hasDelivery = false;
+        result.data.forEach(row => {
+            if (row.IsReceived == 0) {
+                hasDelivery = true;
+                return;
+            }
+        });
         if (result.type == 1) {
             const rowsCount = result.data.length;
             res.status(200).render('search', {
@@ -318,7 +339,8 @@ app.post('/api/search/b', (req, res) => {
                 error: null,
                 afterConfirmation: false,
                 user: 'B',
-                serial: ''
+                serial: '',
+                hasDelivery: hasDelivery
             })
         } else {
             res.status(400).render('fileError', {
@@ -337,7 +359,13 @@ app.post('/api/search', (req, res) => {
     const hof_id = req.body.hof_id;
     if (hof_id !== '') {
         const result = fetchByHOF_ID(hof_id);
-
+        let hasDelivery = false;
+        result.data.forEach(row => {
+            if (row.IsReceived == 0) {
+                hasDelivery = true;
+                return;
+            }
+        });
         if (result.type == 1) {
             const rowsCount = result.data.length;
             res.status(200).render('search', {
@@ -347,7 +375,8 @@ app.post('/api/search', (req, res) => {
                 error: null,
                 afterConfirmation: false,
                 user: 'Default',
-                serial: ''
+                serial: '',
+                hasDelivery: hasDelivery
             })
         } else {
             res.status(400).render('fileError', {
@@ -367,7 +396,7 @@ app.post('/api/confirm', (req, res) => {
     const receiver_name = req.body.receiver_name;
     const hof_fullname = req.body.HOF_FullName;
     const user = req.body.user;
-    const hostname = os.hostname();
+    // const hostname = os.hostname();
     const device_name = req.body.DeviceName + '-' + user;
     const serial = req.body.serial;
 
@@ -407,8 +436,9 @@ app.post('/api/confirm', (req, res) => {
 
 // });
 
-// app.use('/updateDistName', (req, res, next) => {
-//     const result = updateDistName();
+
+// app.use('/deactivate', (req, res, next) => {
+//     const result = deactivateByDistName('Diapers#5');
 //     if (result.type == 1) {
 //         console.log('Table Altered Successfully!');
 //         res.status(200).send('Table Altered Successfully!');

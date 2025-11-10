@@ -31,6 +31,7 @@ const createTable = function () {
 
         date TEXT DEFAULT (datetime('now')),
         DistName TEXT NULL,
+        IsActive INTEGER DEFAULT 1,
 
         
         Member_DateBirth TEXT
@@ -60,14 +61,14 @@ const insertData = function (rows, isNormalUploading = true) {
 
   try {
 
-    const deleteAll = db.prepare(`DELETE FROM ` + TABLE_NAME);
+    //const deleteAll = db.prepare(`DELETE FROM ` + TABLE_NAME);
 
     let insert;
     if (isNormalUploading)
       insert = db.prepare(`INSERT INTO ` + TABLE_NAME + ` (
                         HOF_ID, HOF_FullName, Member_FullName, Member_ID,
-                        Member_DateBirth, Center_Name, Mobile, Quantity, Serial, date 
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, datetime('now'))`);
+                        Member_DateBirth, Center_Name, Mobile, Quantity, Serial, DistName, date
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?, datetime('now'))`);
     else {
 
       insert = db.prepare(`INSERT INTO ` + TABLE_NAME + ` (
@@ -77,7 +78,7 @@ const insertData = function (rows, isNormalUploading = true) {
     }
 
     const transaction = db.transaction((rows) => {
-      deleteAll.run();
+      // deleteAll.run();
       if (isNormalUploading) {
         rows.forEach(row => {
           const hof_id = row['HOF ID'];
@@ -89,6 +90,7 @@ const insertData = function (rows, isNormalUploading = true) {
           const mobile = row['Jawwal#'];
           const quantity = row['Quantity'];
           const serial = row['Serial'];
+          const dist_name = row['DistName'];
 
           insert.run(hof_id,
             hof_fullname,
@@ -98,7 +100,8 @@ const insertData = function (rows, isNormalUploading = true) {
             center_name,
             mobile,
             quantity,
-            serial
+            serial,
+            dist_name
           );
         });
       } else {
@@ -187,6 +190,27 @@ const deleteAllRows = function () {
   }
 }
 
+const deleteRowsByDistName = function (dist_name) {
+  try {
+    const deleteByDistName = db.prepare('DELETE FROM ' + TABLE_NAME + ' WHERE DistName=?;');
+    const data = deleteByDistName.run(dist_name);
+    const result = {
+      type: 1,
+      message: "success",
+      data: data
+    };
+    return result;
+  } catch (err) {
+    const result = {
+      type: -1,
+      message: err.message,
+      code: err.code || null,
+      data: null
+    };
+    return result;
+  }
+}
+
 const fetchAll = function (isExported) {
 
 
@@ -199,9 +223,9 @@ const fetchAll = function (isExported) {
     let select;
     if (isExported === true)
       select = db.prepare(
-        'SELECT Serial AS "#", HOF_ID AS "هوية رب الاسرة", Quantity AS "الكمية",HOF_FullName AS "اسم رب الاسرة", RecieverName AS "المُستلم", Mobile AS "الجوال", Member_FullName AS "اسم المستفيد", Member_ID AS "هوية المستفيد",Member_DateBirth AS "تاريخ الميلاد",IsReceived AS "استلم/لم", Center_Name AS "اسم المركز",DeliveryTime AS "وقت التسليم",DeviceName AS "المسؤول", DistName AS "كشف التوزيع" FROM ' + TABLE_NAME + ';');
+        'SELECT Serial AS "#", HOF_ID AS "هوية رب الاسرة", Quantity AS "الكمية",HOF_FullName AS "اسم رب الاسرة", RecieverName AS "المُستلم", Mobile AS "الجوال", Member_FullName AS "اسم المستفيد", Member_ID AS "هوية المستفيد",Member_DateBirth AS "تاريخ الميلاد",IsReceived AS "استلم/لم", Center_Name AS "اسم المركز",DeliveryTime AS "وقت التسليم",DeviceName AS "المسؤول", DistName AS "كشف التوزيع", IsActive AS "فعال/غير فعال" FROM ' + TABLE_NAME + '  WHERE IsActive=1;');
     else
-      select = db.prepare('SELECT * FROM ' + TABLE_NAME + ';');
+      select = db.prepare('SELECT * FROM ' + TABLE_NAME + ' WHERE IsActive=1;');
 
     const data = select.all();
     const result = {
@@ -223,16 +247,20 @@ const fetchAll = function (isExported) {
 
 const fetchStatistics = () => {
   try {
-    const sql = `SELECT
-    COUNT(*)                                                   AS total_beneficiaries, --إجمالي المستفيدين(حسب الصف)
-    SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END)           AS received_count, --عدد المستلمين
-    COUNT(*) - SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END) AS pending_count, --المتبقّي من المستفيدين
+const sql = `
+  SELECT
+    COUNT(*) AS total_beneficiaries,                 -- إجمالي المستفيدين (حسب الصف)
+    SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END) AS received_count,  -- عدد المستلمين
+    COUNT(*) - SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END) AS pending_count, -- المتبقّي من المستفيدين
 
-    COALESCE(SUM(Quantity), 0)                                 AS total_qty, --إجمالي الكمية
-    COALESCE(SUM(CASE WHEN IsReceived = 1 THEN Quantity ELSE 0 END), 0) AS received_qty, --الكمية المستلمة
+    COALESCE(SUM(Quantity), 0) AS total_qty,  -- إجمالي الكمية
+    COALESCE(SUM(CASE WHEN IsReceived = 1 THEN Quantity ELSE 0 END), 0) AS received_qty, -- الكمية المستلمة
     COALESCE(SUM(Quantity), 0)
-      - COALESCE(SUM(CASE WHEN IsReceived = 1 THEN Quantity ELSE 0 END), 0) AS remaining_qty-- الكمية المتبقية
-FROM ${TABLE_NAME};`;
+      - COALESCE(SUM(CASE WHEN IsReceived = 1 THEN Quantity ELSE 0 END), 0) AS remaining_qty -- الكمية المتبقية
+  FROM ${TABLE_NAME}
+  WHERE IsActive = 1;
+`;
+
 
     const select = db.prepare(sql);
     const data = select.all();
@@ -260,7 +288,7 @@ const fetchByHOF_ID = function (hof_id) {
   // const select = db.prepare('SELECT HOF_ID,HOF_FullName,Member_FullName,Member_ID,Center_Name,Mobile FROM ' + TABLE_NAME + ';');
 
   try {
-    const select = db.prepare('SELECT * FROM ' + TABLE_NAME + ' WHERE HOF_ID = ? ;');
+    const select = db.prepare('SELECT * FROM ' + TABLE_NAME + ' WHERE HOF_ID = ? AND IsActive=1  ;');
     const data = select.all(String(hof_id).trim());
     const result = {
       type: 1,
@@ -283,7 +311,7 @@ const fetchByHOF_ID = function (hof_id) {
 // const alterTable = () => {
 
 //   try {
-//     db.exec(`ALTER TABLE ${TABLE_NAME} ADD COLUMN DistName TExT NULL;`);
+//     db.exec(`ALTER TABLE ${TABLE_NAME} ADD COLUMN IsActive INTEGER DEFAULT 1;`);
 //     const result = {
 //       type: 1,
 //       message: "success"
@@ -301,40 +329,12 @@ const fetchByHOF_ID = function (hof_id) {
 //   }
 // }
 
-
-// const updateDistName = function () {
-
-//   try {
-
-//     const update = db.prepare(`UPDATE  ` + TABLE_NAME + ` SET  
-//         DistName= 'Diapers#4'`);
-
-//     const info = update.run();
-//     const result = {
-//       type: 1,
-//       message: "success",
-//       info: info
-//     };
-//     return result;
-//   }
-//   catch (err) {
-//     const result = {
-//       type: -1,
-//       message: err.message,
-//       code: err.code || null,
-//       info: null
-//     };
-//     return result;
-//   }
-// }
-
-
 const updateReciving = function (hof_id, receiver_name, hostname) {
 
   try {
 
     const update = db.prepare(`UPDATE  ` + TABLE_NAME + ` SET 
-    IsReceived=1 , DeliveryTime=datetime('now', 'localtime'), RecieverName=? ,DeviceName = ? WHERE HOF_ID=?`);
+    IsReceived=1 , DeliveryTime=datetime('now', 'localtime'), RecieverName=? ,DeviceName = ? WHERE HOF_ID=? AND IsReceived=0`);
 
     const info = update.run(receiver_name, hostname, hof_id);
     const result = {
@@ -355,4 +355,30 @@ const updateReciving = function (hof_id, receiver_name, hostname) {
   }
 }
 
-module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable, fetchStatistics, /*alterTable*/ /*updateDistName*/ };
+const deactivateByDistName = function (dist_name) {
+
+  try {
+
+    const update = db.prepare(`UPDATE  ` + TABLE_NAME + ` SET 
+    IsActive=0 WHERE DistName=?`);
+
+    const info = update.run(dist_name);
+    const result = {
+      type: 1,
+      message: "success",
+      info: info
+    };
+    return result;
+  }
+  catch (err) {
+    const result = {
+      type: -1,
+      message: err.message,
+      code: err.code || null,
+      info: null
+    };
+    return result;
+  }
+}
+
+module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable, fetchStatistics, /*alterTable,*/ deleteRowsByDistName,deactivateByDistName };

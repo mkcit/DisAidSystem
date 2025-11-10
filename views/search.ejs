@@ -362,18 +362,21 @@
                         <strong id="hofName"><%= result[0].HOF_FullName %></strong>
                     </div>
                     <% result.forEach(data => { %>
-                        <div class="stat">
+                        <div class="stat" <%- (data.IsReceived==1)?"style='background-color: #281921;'":"style='background-color: #122a26;'" %> >
                             <small>المستفيد الحالي</small>
-                            <strong id="beneficiary"><%= data.Member_FullName %></strong>
+                            <strong id="beneficiary"  <%- (data.IsReceived==1)?"style='color: red;'":"style='color: #149144;'" %>><%= data.Member_FullName %></strong>
                         </div>
-                        <div class="stat">
+                        <div class="stat" <%- (data.IsReceived==1)?"style='background-color: #281921;'":"style='background-color: #122a26;'" %>>
                             <small>الكمية</small>
-                            <strong id="beneficiary" style="font-size: 20pt;"><%= data.Quantity %></strong>
+                            <strong id="beneficiary"  <%- (data.IsReceived==1)?"style='color: red;font-size: 20pt;'":"style='color: #149144;font-size: 20pt;'" %> ><%= data.Quantity %></strong>
+
+                            <!-- <small>كشف التسليم</small> -->
+                            <strong id="beneficiary" style="font-size: clamp(14px, 1.95vw, 16px); color: yellow;"><%= data.DistName %></strong>
                         </div>
                     <% }) %>
-                </div>
-
-                <% if (result[0].IsReceived == 0) { %>
+                </div> 
+<!-- if  at least one isn't delivered -->
+                <% if (hasDelivery) { %>
                     <form class="receive" id="receiveForm" action="/api/confirm" method="post" novalidate>
                         <input type="hidden" name="hof_id" value="<%= result[0].HOF_ID %>" />
                         <input type="hidden" name="HOF_FullName" value="<%= result[0].HOF_FullName %>" />
