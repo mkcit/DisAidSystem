@@ -199,7 +199,7 @@ const getDateTime = function () {
 app.get('/allData', (req, res, next) => {
     const result = fetchAll(false);
 
-    console.log(result);
+    // console.log(result);
     if (result.type == 1) {
         res.status(200).render('allData', {
             rows: result.data,
@@ -271,6 +271,19 @@ app.get('/api/search/b', (req, res) => {
 
 app.get('/api/search', (req, res) => {
     res.status(200).render('search', {
+        title: 'Distribuation Aid System',
+        result: null,
+        rowsCount: 0,
+        error: null,
+        afterConfirmation: false,
+        user: 'Default',
+        serial: '',
+        hasDelivery: false
+    });
+});
+
+app.get('/api/searchAll', (req, res) => {
+    res.status(200).render('searchAll', {
         title: 'Distribuation Aid System',
         result: null,
         rowsCount: 0,
@@ -391,6 +404,35 @@ app.post('/api/search', (req, res) => {
 
 });
 
+app.post('/api/searchAll', (req, res) => {
+    const hof_id = req.body.hof_id;
+    if (hof_id !== '') {
+        const result = fetchByHOF_ID(hof_id, true);
+        if (result.type == 1) {
+            const rowsCount = result.data.length;
+            res.status(200).render('searchAll', {
+                title: 'Distribuation Aid System',
+                result: result.data,
+                rowsCount: rowsCount,
+                error: null,
+                afterConfirmation: false,
+                user: 'Default',
+                serial: '',
+                hasDelivery: false
+            })
+        } else {
+            res.status(400).render('fileError', {
+                title: result.message || 'Error in data processing!',
+                admin: false
+            });
+        }
+    }
+    else {
+        res.redirect('/api/search');
+    }
+
+});
+
 app.post('/api/confirm', (req, res) => {
     const hof_id = req.body.hof_id;
     const receiver_name = req.body.receiver_name;
@@ -470,5 +512,5 @@ app.use('/', (req, res, next) => {
 
 
 app.listen(port, '0.0.0.0', () => {
-    console.log('0.0.0.0 is active..')
+    console.log('SERVER IS ACTIVE..')
 });

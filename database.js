@@ -247,7 +247,7 @@ const fetchAll = function (isExported) {
 
 const fetchStatistics = () => {
   try {
-const sql = `
+    const sql = `
   SELECT
     COUNT(*) AS total_beneficiaries,                 -- إجمالي المستفيدين (حسب الصف)
     SUM(CASE WHEN IsReceived = 1 THEN 1 ELSE 0 END) AS received_count,  -- عدد المستلمين
@@ -283,12 +283,17 @@ const sql = `
 }
 
 
-const fetchByHOF_ID = function (hof_id) {
+const fetchByHOF_ID = function (hof_id, getAll = false) {
 
   // const select = db.prepare('SELECT HOF_ID,HOF_FullName,Member_FullName,Member_ID,Center_Name,Mobile FROM ' + TABLE_NAME + ';');
 
   try {
-    const select = db.prepare('SELECT * FROM ' + TABLE_NAME + ' WHERE HOF_ID = ? AND IsActive=1  ;');
+    let select;
+    if(getAll==false)
+    select = db.prepare('SELECT * FROM ' + TABLE_NAME + ' WHERE HOF_ID = ? AND IsActive=1  ;');
+    else 
+    select = db.prepare('SELECT * FROM ' + TABLE_NAME + ' WHERE HOF_ID = ? ;');
+    
     const data = select.all(String(hof_id).trim());
     const result = {
       type: 1,
@@ -381,4 +386,4 @@ const deactivateByDistName = function (dist_name) {
   }
 }
 
-module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable, fetchStatistics, /*alterTable,*/ deleteRowsByDistName,deactivateByDistName };
+module.exports = { db, insertData, dropTable, deleteAllRows, fetchAll, fetchByHOF_ID, updateReciving, createTable, fetchStatistics, /*alterTable,*/ deleteRowsByDistName, deactivateByDistName };
