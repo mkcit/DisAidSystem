@@ -479,17 +479,17 @@ app.post('/api/confirm', (req, res) => {
 // });
 
 
-// app.use('/deactivate', (req, res, next) => {
-//     const result = deactivateByDistName('Diapers#5');
-//     if (result.type == 1) {
-//         console.log('Table Altered Successfully!');
-//         res.status(200).send('Table Altered Successfully!');
-//     } else {
-//         console.log('Error: ' + result.message);
-//         res.status(400).send('Error: ' + result.message);
-//     }
+app.use('/deactivate', (req, res, next) => {
+    const result = deactivateByDistName('Diapers#6');
+    if (result.type == 1) {
+        console.log('Table Altered Successfully!');
+        res.status(200).send('Table Altered Successfully!');
+    } else {
+        console.log('Error: ' + result.message);
+        res.status(400).send('Error: ' + result.message);
+    }
 
-// });
+});
 
 app.use('/', (req, res, next) => {
     const result = fetchStatistics();

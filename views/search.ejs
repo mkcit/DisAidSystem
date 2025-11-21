@@ -356,6 +356,7 @@
                     <div class="stat">
                         <small>هوية رب الأسرة</small>
                         <strong id="hofId"><%= result[0].HOF_ID %></strong>
+                        <small style="font-size: 8pt;color: yellow;text-align: left;"><%= result[0].Center_Name %></small>
                     </div>
                     <div class="stat">
                         <small>اسم رب الأسرة</small>
@@ -371,7 +372,7 @@
                             <strong id="beneficiary"  <%- (data.IsReceived==1)?"style='color: red;font-size: 20pt;'":"style='color: #149144;font-size: 20pt;'" %> ><%= data.Quantity %></strong>
 
                             <!-- <small>كشف التسليم</small> -->
-                            <strong id="beneficiary" style="font-size: clamp(14px, 1.95vw, 16px); color: yellow;"><%= data.DistName %></strong>
+                            <small id="beneficiary" style="font-size: 8pt;color: yellow;text-align: left;"><%= data.DistName %></small>
                         </div>
                     <% }) %>
                 </div> 
