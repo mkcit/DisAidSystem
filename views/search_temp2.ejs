@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تسليم المساعدات</title>
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #6b7280;
+            --primary: #0ea5e9;
+            --primary-600: #0284c7;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --border: #e5e7eb;
+            --ring: 0 0 0 3px rgba(14, 165, 233, .20);
+            --radius: 18px;
+            --shadow: 0 14px 35px rgba(15, 23, 42, .08);
+        }
+
+        /* تجاهل الـ dark mode ونثبت على light */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #f3f4f6;
+                --card: #ffffff;
+                --text: #0f172a;
+                --muted: #6b7280;
+                --border: #e5e7eb;
+                --shadow: 0 14px 35px rgba(15, 23, 42, .10);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic UI", "Tajawal", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            font-size: clamp(14px, 1.95vw, 16px);
+        }
+
+        .wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: clamp(14px, 4vw, 28px);
+        }
+
+        .page-title {
+            font-size: clamp(1.3rem, 3.4vw, 1.6rem);
+            font-weight: 800;
+            letter-spacing: .2px;
+            margin: 4px 2px 14px;
+            color: #0f172a;
+        }
+
+        .page-subtitle {
+            margin: 0 2px 16px;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        /* شريط البحث */
+        .bar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px 14px 10px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, #e0f2fe55, #ffffff);
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        @media (max-width: 520px) {
+            .search-row {
+                flex-direction: column;
+            }
+        }
+
+        .input,
+        .select {
+            width: 100%;
+            background: #ffffff;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 11px 14px;
+            outline: none;
+            transition: .15s ease;
+            font-size: .95rem;
+        }
+
+        .input::placeholder {
+            color: var(--muted);
+        }
+
+        .input:focus,
+        .select:focus {
+            box-shadow: var(--ring);
+            border-color: var(--primary);
+        }
+
+        .btn {
+            appearance: none;
+            -webkit-appearance: none;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            padding: 11px 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .15s ease;
+            white-space: nowrap;
+            font-size: .95rem;
+        }
+
+        .btn.primary {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn.primary:hover {
+            background: var(--primary-600);
+        }
+
+        .btn.ghost {
+            background: #e0f2fe;
+            border-color: transparent;
+            color: #0f172a;
+        }
+
+        .btn.ghost:hover {
+            background: #bfdbfe;
+        }
+
+        /* رسائل الحالة العلوية */
+        .status-strip {
+            padding: 10px 14px 4px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .status-message {
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: .9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-message.ok {
+            background: rgba(22, 163, 74, .08);
+            color: var(--success);
+        }
+
+        .status-message.no {
+            background: rgba(220, 38, 38, .08);
+            color: var(--danger);
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: currentColor;
+        }
+
+        .serial-wrapper {
+            padding: 6px 14px 10px;
+            text-align: center;
+        }
+
+        .serial-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            background: radial-gradient(circle at top, #facc15, #f97316);
+            color: #111827;
+            padding: 10px 22px;
+            font-weight: 800;
+            font-size: clamp(1.8rem, 10vw, 3rem);
+            letter-spacing: 4px;
+            box-shadow: 0 12px 30px rgba(249, 115, 22, .35);
+        }
+
+        /* شبكة المعلومات */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            padding: 12px 14px 10px;
+        }
+
+        .stat {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 10px 12px;
+            min-height: 68px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            background: linear-gradient(180deg, #ffffff, #f9fafb);
+        }
+
+        .stat small {
+            color: var(--muted);
+            font-size: .78rem;
+        }
+
+        .stat strong {
+            font-size: .96rem;
+        }
+
+        .stat-highlight {
+            background: #ecfdf5;
+            border-color: #bbf7d0;
+        }
+
+        .stat-danger {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .stat-tag {
+            font-size: .72rem;
+            color: #92400e;
+            margin-top: 2px;
+        }
+
+        /* شارة الحالة الرئيسية */
+        .badge {
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-weight: 700;
+            font-size: .95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .badge.ok {
+            background: rgba(22, 163, 74, .12);
+            color: var(--success);
+        }
+
+        .badge.no {
+            background: rgba(220, 38, 38, .12);
+            color: var(--danger);
+        }
+
+        .items {
+            padding: 4px 14px 4px;
+        }
+
+        /* تحويل الجدول إلى كروت على الموبايل – لو احتجته لاحقاً */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+
+        th {
+            background: linear-gradient(180deg, #f9fafb, #f3f4f6);
+            font-weight: 800;
+            font-size: .9rem;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        @media (max-width: 620px) {
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            thead {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+            }
+
+            tr {
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 10px;
+                margin: 10px 0;
+                background: var(--card);
+            }
+
+            td {
+                border: 0;
+                padding: 6px 0;
+                display: grid;
+                grid-template-columns: 120px 1fr;
+                gap: 10px;
+                font-size: .9rem;
+            }
+
+            td::before {
+                content: attr(data-label);
+                color: var(--muted);
+                font-weight: 600;
+            }
+        }
+
+        /* نموذج تأكيد الاستلام */
+        .receive {
+            display: grid;
+            gap: 10px;
+            padding: 12px 14px 14px;
+            border-top: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        @media (min-width: 560px) {
+            .receive {
+                grid-template-columns: 1fr auto;
+                align-items: center;
+            }
+        }
+
+        .note {
+            color: var(--muted);
+            font-size: .9rem;
+            padding: 0 14px 12px;
+        }
+
+        .btn:focus-visible {
+            box-shadow: var(--ring);
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="wrap">
+        <h1 class="page-title">تسليم المساعدات</h1>
+        <p class="page-subtitle">ابحث عن رب الأسرة بالهوية، ثم أكّد تسليم المساعدة للمستفيد.</p>
+
+        <section class="card" role="region" aria-label="بحث وتصفية">
+            <div class="bar">
+                <form action="<%= (user==='A')?'/api/search/a':(user==='B')?'/api/search/b':'/api/search' %>" method="post" autocomplete="off">
+                    <div class="search-row">
+                        <input id="search" name="hof_id" class="input" type="tel"
+                            placeholder="ابحث بهوية رب الأسرة…" required inputmode="numeric" pattern="[0-9]*"
+                            <%= (result===null||rowsCount==0)? 'autofocus' : '' %> />
+                        <button class="btn primary" type="submit">بحث</button>
+                    </div>
+                </form>
+            </div>
+
+            <% if (afterConfirmation) { %>
+                <div class="status-strip">
+                    <span class="status-message ok">
+                        <span class="status-dot"></span>
+                        <span><%=hof_fullname%> استلم بنجاح</span>
+                    </span>
+                </div>
+                <div class="serial-wrapper">
+                    <span class="serial-badge"><%=serial%></span>
+                </div>
+            <% } %>
+
+            <% if (result && rowsCount > 0) { %>
+                <div class="status-strip">
+                    <span id="statusBadge"
+                        class="status-message <%= result[0].IsReceived == 0 ? ' ok' : ' no' %>">
+                        <span class="status-dot"></span>
+                        <span><%= result[0].IsReceived != 0 ? 'مستلم سابقاً' : 'لم يستلم بعد' %></span>
+                    </span>
+                </div>
+
+                <div class="grid">
+                    <% if (result[0].IsReceived != 0) { %>
+                        <div class="stat stat-danger">
+                            <small>المستلم</small>
+                            <strong><%= result[0].RecieverName %></strong>
+                        </div>
+                        <div class="stat stat-danger">
+                            <small>وقت ومكان الاستلام</small>
+                            <strong><%= result[0].DeliveryTime %></strong>
+                            <small class="stat-tag"><%= result[0].DeviceName %></small>
+                        </div>
+                    <% } %>
+
+                    <div class="stat stat-highlight">
+                        <small>هوية رب الأسرة</small>
+                        <strong id="hofId"><%= result[0].HOF_ID %></strong>
+                        <small class="stat-tag"><%= result[0].Center_Name %></small>
+                    </div>
+
+                    <div class="stat">
+                        <small>اسم رب الأسرة</small>
+                        <strong id="hofName"><%= result[0].HOF_FullName %></strong>
+                    </div>
+
+                    <% result.forEach(data => { %>
+                        <div class="stat <%= data.IsReceived==1 ? 'stat-danger' : 'stat-highlight' %>">
+                            <small>المستفيد الحالي</small>
+                            <strong id="beneficiary"
+                                style="font-weight: 700;"><%= data.Member_FullName %></strong>
+                        </div>
+                        <div class="stat <%= data.IsReceived==1 ? 'stat-danger' : 'stat-highlight' %>">
+                            <small>الكمية</small>
+                            <strong
+                                style="font-size: 1.4rem;"><%= data.Quantity %></strong>
+                            <small class="stat-tag"><%= data.DistName %></small>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <% if (hasDelivery) { %>
+                    <form class="receive" id="receiveForm" action="/api/confirm" method="post">
+                        <input type="hidden" name="hof_id" value="<%= result[0].HOF_ID %>" />
+                        <input type="hidden" name="HOF_FullName" value="<%= result[0].HOF_FullName %>" />
+                        <input type="hidden" name="user" value="<%= user %>" />
+                        <input type="hidden" name="serial" value="<%= result[0].Serial  %>" />
+                        <input class="input" id="receiver_name" name="receiver_name" lang="ar" dir="rtl"
+                            placeholder="اكتب اسم المستلم هنا" autofocus required />
+                        <button class="btn primary" id="submitReceive" type="submit">تأكيد الاستلام</button>
+                    </form>
+                    <p class="note">تأكّد من مطابقة اسم المستلم مع الهوية أو بيانات الأسرة قبل الضغط على
+                        "تأكيد الاستلام".</p>
+                <% } %>
+            <% } else if (result && rowsCount == 0) { %>
+                <div class="status-strip">
+                    <span id="statusBadge" class="status-message no">
+                        <span class="status-dot"></span>
+                        <span>للأسف هذا الشخص غير مستفيد من المساعدة في هذا الكشف.</span>
+                    </span>
+                </div>
+            <% } %>
+        </section>
+    </main>
+
+    <!-- سكربت التقاط اسم/موديل الجهاز وإرساله مع نموذج التأكيد -->
+    <script>
+      const DEVICE_MAP = {
+        "SM-G991B": "Samsung Galaxy S21",
+        "SM-G996B": "Samsung Galaxy S21+",
+        "SM-G998B": "Samsung Galaxy S21 Ultra",
+        "SM-A125F": "Samsung Galaxy A12",
+        "SM-M236B": "Samsung Galaxy M23",
+        "iPhone14,5": "iPhone 13",
+        "iPhone14,2": "iPhone 13 Pro",
+        "iPhone15,3": "iPhone 14 Pro Max",
+      };
+
+      function modelFromUA(ua) {
+        const patterns = [
+          /(SM-[A-Z0-9]+)/,
+          /(Pixel\s?[0-9a-zA-Z\s]*)/,
+          /(Redmi\s?[0-9A-Za-z\s\-+]*)/,
+          /\bMi\s?[0-9A-Za-z\s\-+]*\b/,
+          /\bM200[0-9A-Za-z\-]*\b/,
+          /\bONEPLUS\s?[A-Z0-9\-]+\b/,
+          /(iPhone[0-9,]+)/
+        ];
+        for (const re of patterns) {
+          const m = ua.match(re);
+          if (m && m[1]) return m[1].trim();
+        }
+        if (/iPhone/.test(ua)) return "iPhone";
+        if (/iPad/.test(ua)) return "iPad";
+        if (/Android/.test(ua)) return "Android";
+        if (/Windows/.test(ua)) return "Windows PC";
+        if (/Macintosh/.test(ua)) return "Mac";
+        return "Unknown";
+      }
+
+      function prettyNameFromModel(model) {
+        if (DEVICE_MAP[model]) return DEVICE_MAP[model];
+        if (model.startsWith("SM-")) return "Samsung " + model;
+        if (/^Pixel/i.test(model)) return model.replace(/\s+/g, " ").trim();
+        if (/^Redmi/i.test(model)) return model.trim();
+        if (/^Mi /i.test(model)) return model.trim();
+        if (/^ONEPLUS/i.test(model)) return model.replace(/\s+/, " ").trim();
+        return model;
+      }
+
+      async function detectDeviceName() {
+        try {
+          if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+            const he = await navigator.userAgentData.getHighEntropyValues(["model","platform","platformVersion","uaFullVersion"]);
+            if (he?.model) return prettyNameFromModel(he.model);
+          }
+        } catch (_) { }
+
+        const ua = navigator.userAgent || "";
+        const model = modelFromUA(ua);
+        return prettyNameFromModel(model);
+      }
+
+      (async () => {
+        const deviceName = await detectDeviceName();
+        const form = document.querySelector('#receiveForm');
+        if (form) {
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'DeviceName';
+          hidden.value = deviceName;
+          form.appendChild(hidden);
+        }
+      })();
+    </script>
+</body>
+</html>

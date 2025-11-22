@@ -68,6 +68,7 @@ const app = express();
 
 app.use(useragent.express());
 
+app.use(express.static(path.join(__dirname, 'public')));
 
 // setting up the view engine
 app.set('view engine', 'ejs');
