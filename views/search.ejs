@@ -458,8 +458,8 @@
                     action="<%= (user==='A')?'/api/search/a':(user==='B')?'/api/search/b':'/api/search' %>"
                     method="post" autocomplete="off">
                     <div class="search-row">
-                        <input id="search" name="hof_id" class="input" type="tel"
-                            placeholder="ابحث برقم هوية رب الأسرة…" required inputmode="numeric" pattern="[0-9]*"
+                        <input style="font-size: 1.5rem;text-align: center;font-family:Tajawal" id="search" name="hof_id" class="input" type="tel"
+                            placeholder="هوية رب الأسرة هنا" required inputmode="numeric" pattern="[0-9]*"
                             <%=(result===null||rowsCount==0)? 'autofocus' : '' %> />
                         <button class="btn btn-primary" type="submit">بحث</button>
                     </div>
